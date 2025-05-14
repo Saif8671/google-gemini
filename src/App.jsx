@@ -2,6 +2,10 @@ import React, { useState, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
 import ReactMarkdown from 'react-markdown';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import * as pdfjsLib from 'pdfjs-dist';
+
+// Update the worker URL to use the correct version and direct URL without ?import
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.269/pdf.worker.min.js';
 
 function App() {
   const [messages, setMessages] = useState([]);
@@ -20,9 +24,21 @@ function App() {
       const file = acceptedFiles[0];
       if (file) {
         const arrayBuffer = await file.arrayBuffer();
-        const pdfParser = await import('pdf-parse');
-        const data = await pdfParser.default(Buffer.from(arrayBuffer));
-        setAgendaText(data.text);
+        try {
+          const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+          let fullText = '';
+          
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+            const pageText = textContent.items.map(item => item.str).join(' ');
+            fullText += pageText + '\n';
+          }
+          
+          setAgendaText(fullText);
+        } catch (error) {
+          console.error('Error parsing PDF:', error);
+        }
       }
     },
   });
