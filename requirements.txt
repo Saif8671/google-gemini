@@ -1,0 +1,9 @@
+streamlit
+PyMuPDF
+pdfminer.six
+google-generativeai
+beautifulsoup4
+requests
+tqdm
+faiss-cpu
+python-dotenv
